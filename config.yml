@@ -1,0 +1,82 @@
+name: "UIEB_128"
+gpu_ids: [0,1]
+
+path:
+    log: "logs"
+    tb_logger: "tb_logger"
+    results: "results"
+    checkpoint: "checkpoint"
+    resume_state: # experiments/UIEB_241128_123135/checkpoint/I340000_E427 # experiments/UIEB_240604_162047/checkpoint/I290000_E276 # 更改文本前DDIM继续训练的路径地址
+    resume_state_invert: # experiments/UIEB_240607_182842/checkpoint/Current # DDIMInvert继续训练的路径地址
+    resume_best_invert: # experiments/UIEB_240521_195148/checkpoint/Current # DDIMInvert训练结果最好的路径地址
+
+datasets:
+    train:
+        name: "UIEB_128" # "UFO120","UIEB"
+        dataroot: "./dataset/UIEB_128/train"
+        resolution: 256
+        batch_size: 10
+        num_workers: 8 # 8
+        use_shuffle: true
+        data_len: -1
+    val:
+        name: "UIEB_128"
+        dataroot: "./dataset/UIEB_128/test"
+        resolution: 256
+        use_shuffle: false
+        data_len: -1
+model:
+    finetune_norm: false # true
+    latent_space: false # true # 48, [1, 2, 4, 8] # false # 64, [1,2,4,8,8]
+    single_step: false
+    unet:
+        in_channel: 4 # 6
+        out_channel: 4
+        inner_channel: 64 # 64
+        norm_groups: 16
+        channel_multiplier: [1, 2, 4, 8, 8] # [1, 2, 4, 8, 8] # [1, 2, 4, 8, 16]
+        attn_res: [128, 64, 32, 16] # [16,8,4,2] #16
+        res_blocks: 1 # 1
+        dropout: 0.1
+        channels: 3
+        ratio: 1
+        cond_in_dim: 3
+        image_size: 256
+    diffusion:
+        image_size: 256
+        channels: 3
+        conditional: true
+    beta_schedule:
+        train:
+            schedule: linear
+            n_timestep: 2000
+            linear_start: 0.000001 #1e-6
+            linear_end: 0.01 #1e-2
+        val:
+            schedule: linear
+            n_timestep: 2000
+            linear_start: 0.000001 #1e-6
+            linear_end: 0.01 #1e-2
+diffusion:
+    inversion: True
+    invert_steps: 100 # T
+    Ttrain_steps: 100    # 每个t时刻训练的次数
+    image_size: 256
+    channels: 3
+    conditional: true
+
+train:
+    n_iter: 1000000 # 1000000
+    val_freq: 10000 #1e4
+    save_checkpoint_freq: 5000 #1e4
+    print_freq: 100
+    optimizer:
+        type: "adam"
+        lr: 0.000003 #3e-6
+    ema_scheduler:
+        step_start_ema: 5000
+        update_ema_every: 1
+        ema_decay: 0.9999
+
+wandb:
+    project: "UIE"
